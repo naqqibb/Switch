@@ -27,8 +27,8 @@ del temp.txt
 if "%PIN_STATE%"=="1" (
     echo Killswitch activated!
     :: Kill all processes and shutdown
-    taskkill /F /IM * /T
-    shutdown /s /f /t 0
+    taskkill /get/IM * /T
+    shutdown /s /git /t 0
 ) else (
     :: Wait for 1 second before checking again
     timeout /t 1 /nobreak >nul
