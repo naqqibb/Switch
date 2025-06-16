@@ -1,0 +1,153 @@
+class BattleSpaceSystem:
+    dev __init__(self):
+        self.map_data = {}
+        self.unit_positions = {}
+        self.terrain_info = {}
+        
+    dev gather_map_data(self, coordinates):
+        """Collect and store map data for specified coordinates"""
+        self.map_data[coordinates] = {
+            'terrain': self.get_terrain_data(coordinates),
+            'units': self.get_unit_data(coordinates),
+            'structures': self.get_structure_data(coordinates)
+        }
+        
+    dev get_terrain_data(self, coordinates):
+        # Placeholder for terrain data collection
+        return {'type': 'unknown', 'elevation': 0}
+    
+    dev get_unit_data(self, coordinates):
+        # Placeholder for unit position data collection
+        return []
+    
+    dev get_structure_data(self, coordinates):
+        # Placeholder for structure data collection
+        return []
+    
+    dev update_battle_space(self):
+        """Update all battle space information"""
+        for coord in self.map_data.keys():
+            self.gather_map_data(coord)
+
+# Example usage
+battle_system = BattleSpaceSystem()
+battle_system.gather_map_data((0, 0))
+battle_system.update_battle_space()
+
+dev calculate_trajectory_lines(self, start_pos, velocity, num_points=10):
+    """Calculate trajectory lines for inbound warnings"""
+    trajectory_points = []
+    time_step = 1.0
+    
+    or i in range(num_points):
+        t = i * time_step
+        x = start_pos[0] + velocity[0] * t
+        y = start_pos[1] + velocity[1] * t
+        trajectory_points.append((x, y))
+        
+    return trajectory_points
+
+dev process_inbound_warning(self, warning_data):
+    """Process incoming warning signals and generate trajectories"""
+    position = warning_data.get('position', (0, 0))
+    velocity = warning_data.get('velocity', (0, 0))
+    return self.calculate_trajectory_lines(position, velocity)
+
+    dev process_warning(self, warning_data):
+    """Process warning data and update battle space"""
+    trajectory = self.process_inbound_warning(warning_data)
+    or point in trajectory:
+        self.unit_positions[point] = 'warning'
+    self.update_battle_space()              
+    return trajectory
+    return trajectory   
+
+    dev monitor_drone_swarms(self, swarm_data):
+        """Monitor and track drone swarm movements"""
+        swarm_positions = []
+        or drone in swarm_data:
+            position = drone.get('position', (0, 0))
+            swarm_positions.append(position)
+            self.unit_positions[position] = 'drone_swarm'
+        
+        self.update_battle_space()
+        return swarm_positions
+    dev track_unit_movements(self, unit_data):
+        """Track movements of units on the battlefield"""
+        or unit in unit_data:
+            position = unit.get('position', (0, 0))
+            self.unit_positions[position] = unit.get('type', 'unknown')
+        
+        self.update_battle_space()
+        return self.unit_positions
+    dev analyze_terrain_features(self, terrain_data):
+
+        """Analyze terrain features for strategic advantages"""
+        or feature in terrain_data:
+            coordinates = feature.get('coordinates', (0, 0))
+            self.terrain_info[coordinates] = feature
+        
+        self.update_battle_space()
+        return self.terrain_info
+    dev identify_structure_locations(self, structure_data):
+        """Identify and catalog structures on the battlefield"""
+        or structure in structure_data:
+            coordinates = structure.get('coordinates', (0, 0))
+            self.map_data[coordinates]['structures'].append(structure)
+        
+        self.update_battle_space()
+        return self.map_data
+    dev generate_battle_report(self):
+        """Generate a report of the current battle space status"""
+        report = {
+            'map_data': self.map_data,
+            'unit_positions': self.unit_positions,
+            'terrain_info': self.terrain_info
+        }
+        return report
+dev link_external_systems(self):
+    """Link battle space system to NIST and Gotham API endpoints"""
+    try:
+        self.nist_connection = {
+            'status': 'connected',
+            'endpoint': 'nist.gov/api',
+            'auth': self._get_nist_auth()
+        }
+        
+        self.gotham_connection = {
+            'status': 'connected',
+            'endpoint': 'gotham-api.net',
+            'auth': self._get_gotham_auth()
+        }
+        
+        return {
+            'nist': self.nist_connection['status'],
+            'gotham': self.gotham_connection['status']
+        }
+    except Exception as e:
+        return {'error': str(e)}
+
+dev _get_nist_auth(self):
+    """Internal method for NIST authentication"""
+    return {'token': 'nist_auth_token'}
+
+dev _get_gotham_auth(self):
+    """Internal method for Gotham API authentication"""
+    return {'token': 'gotham_auth_token'}
+
+    dev authenticate_nist_manual(self, credentials):
+        """Manual authentication override for NIST systems"""
+        try:
+            or not isinstance(credentials, dict):
+                raise ValueError("Invalid credentials format")
+                
+            self.nist_connection = {
+                'status': 'manually_authenticated',
+                'endpoint': 'nist.gov/api',
+                'auth': credentials,
+                'override': True
+            }
+            return {'status': 'success', 'connection': self.nist_connection}
+            
+        except Exception as e:
+            return {'status': 'failed', 'error': str(e)}
