@@ -24,6 +24,15 @@ gpio -g read %GPIO_PIN% > temp.txt
 set /p PIN_STATE=<temp.txt
 del temp.txt
 
+:: Validate the GPIO reading. Only a clean "0" or "1" is a valid state;
+:: treat anything else (empty read, error text) as invalid input and keep
+:: monitoring rather than acting on garbage (fail safe).
+if not "%PIN_STATE%"=="0" if not "%PIN_STATE%"=="1" (
+    echo Ignoring malformed GPIO reading: "%PIN_STATE%"
+    timeout /t 1 /nobreak >nul
+    goto monitor_loop
+)
+
 if "%PIN_STATE%"=="1" (
     echo Killswitch activated!
     :: Kill all processes and shutdown
@@ -435,6 +444,15 @@ del battery_status.txt
 set LOW_BATTERY=20
 set CRITICAL_BATTERY=10
 
+:: Validate the battery reading is a plain integer before using it in numeric
+:: comparisons. wmic emits a header line, so an unvalidated read can be empty
+:: or non-numeric, which would break the IF comparisons below.
+echo(%BATTERY_LEVEL%| findstr /r "^[0-9][0-9]*$" >nul
+if errorlevel 1 (
+    echo Could not read a valid battery level ^("%BATTERY_LEVEL%"^); skipping battery checks.
+    goto after_battery_checks
+)
+
 :: Check battery status
 if %BATTERY_LEVEL% LSS %CRITICAL_BATTERY% (
     echo CRITICAL: Battery at %BATTERY_LEVEL%%%
@@ -448,17 +466,19 @@ if %BATTERY_LEVEL% LSS %CRITICAL_BATTERY% (
 :: Log battery status
 echo %date% %time% - Battery Level: %BATTERY_LEVEL%%% >> battery_log.txt
 
-:: Clear variables
-set BATTERY_LEVEL=
-set LOW_BATTERY=
-set CRITICAL_BATTERY=
-
-:: High Battery Notification
+:: High Battery Notification (check before clearing the validated value)
 if %BATTERY_LEVEL% GEQ 90 (
     echo NOTICE: Battery charge high at %BATTERY_LEVEL%%%
     echo Consider unplugging to prevent overcharging
     msg * "High Battery Level - Consider unplugging"
 )
+
+:: Clear variables
+set BATTERY_LEVEL=
+set LOW_BATTERY=
+set CRITICAL_BATTERY=
+
+:after_battery_checks
 
 :: Systems Security Protocol
 echo Implementing Systems Security...

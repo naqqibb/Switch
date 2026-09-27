@@ -13,13 +13,60 @@ param(
     [string]$TargetNetwork
 )
 
+# --- Input validation -------------------------------------------------------
+# Validate all externally supplied parameters before they reach nmap, the
+# Log Analytics REST call, or the SharedKey header. $TargetNetwork in
+# particular is passed as an argument to nmap, so it must not contain shell or
+# argument metacharacters (command/argument-injection guard).
+function Test-TargetNetwork {
+    param([string]$Target)
+
+    if ([string]::IsNullOrWhiteSpace($Target)) { return $false }
+    # Reject anything that could break out of the nmap argument list.
+    if ($Target -match '[;&|`$(){}<>"''\\\s]') { return $false }
+
+    foreach ($entry in $Target.Split(',')) {
+        $t = $entry.Trim()
+        if ($t -eq '') { return $false }
+
+        $isIpOrCidr = $t -match '^(\d{1,3}\.){3}\d{1,3}(/\d{1,2})?$'
+        $isHostname = $t -match '^(?=.{1,253}$)([A-Za-z0-9](-?[A-Za-z0-9])*)(\.[A-Za-z0-9](-?[A-Za-z0-9])*)*$'
+        if (-not ($isIpOrCidr -or $isHostname)) { return $false }
+
+        if ($isIpOrCidr) {
+            $parts  = $t.Split('/')
+            $octets = $parts[0].Split('.')
+            if (($octets | Where-Object { [int]$_ -gt 255 }).Count -gt 0) { return $false }
+            if ($parts.Count -eq 2 -and [int]$parts[1] -gt 32) { return $false }
+        }
+    }
+    return $true
+}
+
+if (-not (Test-TargetNetwork -Target $TargetNetwork)) {
+    throw "Invalid TargetNetwork '$TargetNetwork'. Supply IPv4 address(es), CIDR range(s), or hostname(s), comma-separated, with no shell metacharacters."
+}
+if ($WorkspaceId -notmatch '^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$') {
+    throw "WorkspaceId must be a valid GUID."
+}
+if ([string]::IsNullOrWhiteSpace($WorkspaceKey)) {
+    throw "WorkspaceKey must not be empty."
+}
+
 # Connect to Azure
 Connect-AzAccount
 
 # Function to run Nmap scan and format results
 function Start-NmapScan {
     param($target)
-    
+
+    # Defence in depth: never invoke nmap with an unvalidated target, even for
+    # internally computed callers.
+    if (-not (Test-TargetNetwork -Target ([string]$target))) {
+        Write-Error "Refusing to scan invalid/unsafe target: '$target'"
+        return $null
+    }
+
     try {
         $scanResults = nmap -sS -T4 -A $target --script vuln -oX nmapresults.xml
         
